@@ -2,8 +2,10 @@
   "name": "server",
   "version": "1.0.0",
   "description": "A project that is a backend of Play Video project like a youtube.",
+  "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -12,5 +14,8 @@
     "Server"
   ],
   "author": "Amrit Giri",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
 }
