@@ -8,7 +8,7 @@ const connectToDB = async () => {
       `${process.env.MONGODB_URI}/${DB_NAME}`
     );
     console.log(
-      `MongoDb Connected Successfully🚀✅! \nFollow the following link for Testing:  http://${connection.connection.host}:${process.env.PORT}/ping`
+      `MongoDb Connected Successfully🚀✅! \nFollow the following link for Testing:  http://${connection.connection.host}:${process.env.PORT}/ping 🚀✅`
     );
   } catch (err: any) {
     console.log("MONGODB connection FAILED❌ ", err.message);
