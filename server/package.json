@@ -1,22 +1,34 @@
 {
-  "name": "server",
+  "name": "backend",
   "version": "1.0.0",
   "description": "A project that is a backend of Play Video project like a youtube.",
-  "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon index.js",
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "Backend",
-    "JavaScript",
-    "Server"
+    "TypeScript"
   ],
   "author": "Amrit Giri",
   "license": "ISC",
+  "dependencies": {
+    "@types/bcryptjs": "^2.4.4",
+    "@types/cookie-parser": "^1.4.4",
+    "@types/cors": "^2.8.14",
+    "@types/express": "^4.17.18",
+    "@types/node": "^20.7.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "ioredis": "^5.3.2",
+    "mongoose": "^8.0.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.2.2"
+  },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "prettier": "3.0.3"
+    "prettier": "^3.0.3"
   }
 }
