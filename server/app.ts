@@ -7,7 +7,13 @@ import cors from "cors";
 export const app = express();
 
 // Body parser
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "50kb" }));
+
+// url encoded
+app.use(express.urlencoded({ extended: true, limit: "50kb" }));
+
+// static files
+app.use(express.static("public"));
 
 // cookie parser
 app.use(cookieParser());
@@ -15,8 +21,9 @@ app.use(cookieParser());
 // corse => Cross Origin Resource Sharing
 app.use(
   cors({
-    origin: process.env.ORIGIN,
-    // credentials: true,
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 

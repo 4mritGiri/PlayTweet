@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import ErrorHandler from "../utils/ErrorHandler";
+import { ApiError, ErrorHandler } from "../utils/ApiError";
 
 export const ErrorMiddleware = (
   err: any,
@@ -13,7 +13,7 @@ export const ErrorMiddleware = (
   //Wrong MongoDB id error
   if (err.name === "CastError") {
     const message = `Resource not found. Invalid: ${err.path}`;
-    err = new ErrorHandler(message, 400);
+    err = new ApiError(message, 400);
   }
 
   // Duplicate MongoDB key error
