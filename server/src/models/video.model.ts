@@ -2,10 +2,16 @@ import mongoose, { Schema, Document } from "mongoose";
 import  mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 
+export interface IOwner {
+  _id: string;
+  username: string;
+  avatar: string;
+}
+
 export interface IVideo extends Document {
   title: string;
   description: string;
-  owner: object;
+  owner: IOwner;
   thumbnail: string;
   videoFile: string;
   duration: number;

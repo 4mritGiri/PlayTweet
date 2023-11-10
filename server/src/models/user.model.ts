@@ -91,6 +91,16 @@ userSchema.methods.isPasswordMatch = async function (password: string) {
 };
 
 userSchema.methods.generateAccessToken = function () {
+  const accessSecret = process.env.ACCESS_TOKEN_SECRET as string;
+  if (!accessSecret) {
+    throw new Error("ACCESS_TOKEN_SECRET is not defined");
+  }
+
+  const accessExpiresIn = process.env.ACCESS_TOKEN_EXPIRY as string;
+  if (!accessExpiresIn) {
+    throw new Error("ACCESS_TOKEN_EXPIRY is not defined");
+  }
+
   const accessToken = jwt.sign(
     {
       _id: this._id,
@@ -98,22 +108,28 @@ userSchema.methods.generateAccessToken = function () {
       username: this.username,
       fullName: this.fullName,
     },
-    process.env.ACCESS_TOKEN_SECRET as string,
+    accessSecret,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: accessExpiresIn,
     }
   );
   return accessToken;
 };
 
 userSchema.methods.generateRefreshToken = function () {
-  const refreshToken = jwt.sign(
-    { _id: this._id },
-    process.env.REFRESH_TOKEN_SECRET as string,
-    {
-      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    }
-  );
+  const refreshSecret = process.env.REFRESH_TOKEN_SECRET as string;
+  if (!refreshSecret) {
+    throw new Error("REFRESH_TOKEN_SECRET is not defined");
+  }
+
+  const refreshExpiresIn = process.env.REFRESH_TOKEN_EXPIRY as string;
+  if (!refreshExpiresIn) {
+    throw new Error("REFRESH_TOKEN_EXPIRY is not defined");
+  }
+
+  const refreshToken = jwt.sign({ _id: this._id }, refreshSecret, {
+    expiresIn: refreshExpiresIn,
+  });
   return refreshToken;
 };
 
