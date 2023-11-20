@@ -3,6 +3,7 @@ import express, { NextFunction, Request, Response } from "express";
 import { ErrorMiddleware } from "./src/middlewares/error";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { userRouter } from "./src/routes/user.route";
 
 export const app = express();
 
@@ -28,7 +29,7 @@ app.use(
 );
 
 // routes
-// app.use("/api/v1");
+app.use(`${process.env.ROUTE}`, userRouter);
 
 // testing api
 app.get("/ping", (req: Request, res: Response, next: NextFunction) => {
