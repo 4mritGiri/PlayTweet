@@ -21,7 +21,7 @@ const uploadOnCloudinary = async (localFilePath: string) => {
   } catch (error: any) {
     fs.unlinkSync(localFilePath); // remove file from local storage if it fails to upload on cloudinary
 
-    return new ApiError("CLOUDINARY ERROR:: ", 500, error.message, error.stack);
+    return new ApiError( 500, "CLOUDINARY ERROR:: ", error.message, error.stack);
   }
 };
 
