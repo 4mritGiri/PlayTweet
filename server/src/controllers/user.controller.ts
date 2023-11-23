@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
-import { isValidEmail, isValidPassword } from "../utils/validationCheck";
+import {
+  isValidEmail,
+  isValidFullName,
+  isValidPassword,
+  isValidUsername,
+} from "../utils/validationCheck";
 import { User } from "../models/user.model";
 import { uploadOnCloudinary } from "../utils/cloudinary";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -33,8 +38,18 @@ const userRegister = asyncHandler(
         "Password must be at least 8 characters, At least one lowercase letter, one uppercase letter, one number, and one special character, No spaces allowed❌"
       );
     }
-
-    // 5. validation - password match
+    // 5. validation - username format ✅
+    else if (!isValidUsername(username)) {
+      throw new ApiError(
+        400,
+        "Username can only contain alphanumeric characters and underscores❌"
+      );
+    } else if (!isValidFullName(fullName)) {
+      throw new ApiError(
+        400,
+        "Full name can only contain alphabets and spaces❌"
+      );
+    }
 
     // 6. check if user already exists: username, email
     const isUserExisted = User.findOne({
@@ -88,9 +103,11 @@ const userRegister = asyncHandler(
     }
 
     // 12. return response
-    return res.status(201).json(
-      new ApiResponse(200, createdUser, "User registered Successfully!✅")
-    );
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(200, createdUser, "User registered Successfully!✅")
+      );
   }
 );
 export { userRegister };
