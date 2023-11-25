@@ -21,6 +21,12 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
+    fullName: {
+      type: String,
+      required: [true, "Fullname is required!"],
+      trim: true,
+      index: true,
+    },
     username: {
       type: String,
       required: [true, "Username is required!"],
@@ -40,12 +46,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required!"],
       trim: true,
-    },
-    fullName: {
-      type: String,
-      required: [true, "Fullname is required!"],
-      trim: true,
-      index: true,
     },
     avatar: {
       public_id: {

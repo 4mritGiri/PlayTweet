@@ -8,7 +8,7 @@ userRouter.post(
   "/register",
   upload.fields([
     { name: "avatar", maxCount: 1 },
-    { name: "coverImg", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
   ]),
   userRegister
 );
