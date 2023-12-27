@@ -234,7 +234,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
     const incomingRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
   
-    if (incomingRefreshToken) {
+    if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized request");
     }
   
