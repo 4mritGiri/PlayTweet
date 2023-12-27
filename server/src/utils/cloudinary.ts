@@ -10,7 +10,6 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (folder: string, localFilePath: string) => {
   try {
-    // if (!localFilePath) return null;
     if (!localFilePath) throw new ApiError(400, "No file provided for upload");
     const response = await cloudinary.uploader.upload(localFilePath, {
       folder: `PlayTweet/${folder}`,
@@ -19,15 +18,22 @@ const uploadOnCloudinary = async (folder: string, localFilePath: string) => {
     // file has been uploaded on cloudinary
 
     // remove file from local storage
-    if (localFilePath === "public\\Images\\default_cover_image_url.png") {
+    const path = require('path');
+    const defaultCoverImagePath = path.join(__dirname, '../../public/Images/default_cover_image_url.jpeg');
+    if (localFilePath === defaultCoverImagePath) {
       // do nothing
+
     } else {
-      fs.unlinkSync(localFilePath);
+      try {
+        fs.unlinkSync(localFilePath);
+      } catch (error: any) {
+        console.error(`Failed to unlink file ${localFilePath}: ${error.message}`);
+      }
     }
     return response;
   } catch (error: any) {
     // remove file from local storage if it fails to upload on cloudinary
-    fs.unlinkSync(localFilePath); 
+    fs.unlinkSync(localFilePath);
     return new ApiError(500, "CLOUDINARY ERROR:: ", error.message, error.stack);
   }
 };

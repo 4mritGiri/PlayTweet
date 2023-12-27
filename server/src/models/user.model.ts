@@ -17,6 +17,9 @@ export interface IUser extends Document {
   password: string;
   refreshTokens: string;
   watchHistory: string[];
+  isPasswordMatch: (password: string) => Promise<boolean>;
+  generateAccessToken: () => string;
+  generateRefreshToken: () => string;
 }
 
 const userSchema = new Schema<IUser>(
