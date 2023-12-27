@@ -11,6 +11,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/ApiResponse";
 import * as fs from "fs";
+import { JwtPayload, verify } from "jsonwebtoken";
 
 interface Files {
   [fieldname: string]: Express.Multer.File[];
@@ -21,7 +22,6 @@ interface RequestWithUser extends Request {
     _id: string;
   };
 }
-
 
 const generateAccessAndRefreshTokens = async (userId: any) => {
   try {
@@ -37,7 +37,10 @@ const generateAccessAndRefreshTokens = async (userId: any) => {
 
     return { accessToken, refreshTokens };
   } catch (error: any) {
-    throw new ApiError(500, "Something went wrong while generating refresh and access token.");
+    throw new ApiError(
+      500,
+      "Something went wrong while generating refresh and access token."
+    );
   }
 };
 
@@ -45,23 +48,39 @@ const userRegister = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { fullName, username, email, password } = req.body;
 
-    if ([fullName, username, email, password].some((field) => field?.trim() === "")) {
+    if (
+      [fullName, username, email, password].some(
+        (field) => field?.trim() === ""
+      )
+    ) {
       throw new ApiError(400, "All fields are required");
     } else if (!isValidFullName(fullName)) {
-      throw new ApiError(400, "Full name can only contain alphabets and spaces");
+      throw new ApiError(
+        400,
+        "Full name can only contain alphabets and spaces"
+      );
     } else if (!isValidUsername(username)) {
-      throw new ApiError(400, "Username can only contain alphanumeric characters and underscores");
+      throw new ApiError(
+        400,
+        "Username can only contain alphanumeric characters and underscores"
+      );
     } else if (!isValidEmail(email)) {
       throw new ApiError(400, "Invalid email format");
     } else if (!isValidPassword(password)) {
-      throw new ApiError(400, "Password must be at least 8 characters, contain one lowercase letter, one uppercase letter, one number, and one special character. No spaces allowed");
+      throw new ApiError(
+        400,
+        "Password must be at least 8 characters, contain one lowercase letter, one uppercase letter, one number, and one special character. No spaces allowed"
+      );
     }
 
     const isUserExisted = await User.findOne({
       $or: [{ username }, { email }],
     });
     if (isUserExisted) {
-      throw new ApiError(409, `User with Email:${email} or Username:${username} already exists!`);
+      throw new ApiError(
+        409,
+        `User with Email:${email} or Username:${username} already exists!`
+      );
     }
 
     const files = req.files as Files;
@@ -77,16 +96,28 @@ const userRegister = asyncHandler(
     let coverImage;
     if (coverImgLocalPath) {
       if (!fs.existsSync(coverImgLocalPath)) {
-        throw new ApiError(404, `Cover image file not found: ${coverImgLocalPath}`);
+        throw new ApiError(
+          404,
+          `Cover image file not found: ${coverImgLocalPath}`
+        );
       }
       coverImage = await uploadOnCloudinary("coverImage", coverImgLocalPath);
     } else {
-      const path = require('path');
-      const defaultCoverImagePath = path.join(__dirname, '../../public/Images/default_cover_image_url.jpeg');
+      const path = require("path");
+      const defaultCoverImagePath = path.join(
+        __dirname,
+        "../../public/Images/default_cover_image_url.jpeg"
+      );
       if (!fs.existsSync(defaultCoverImagePath)) {
-        throw new ApiError(404, `Default cover image file not found: ${defaultCoverImagePath}`);
+        throw new ApiError(
+          404,
+          `Default cover image file not found: ${defaultCoverImagePath}`
+        );
       }
-      coverImage = await uploadOnCloudinary("coverImage", defaultCoverImagePath);
+      coverImage = await uploadOnCloudinary(
+        "coverImage",
+        defaultCoverImagePath
+      );
     }
 
     if (!avatar) {
@@ -115,7 +146,9 @@ const userRegister = asyncHandler(
       coverImage: { url: coverImgUrl },
     });
 
-    const createdUser = await User.findById(user._id).select("-password -refreshTokens");
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshTokens"
+    );
 
     if (!createdUser) {
       throw new ApiError(500, "Something went wrong while registering user!");
@@ -148,9 +181,13 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(401, "Invalid user credentials!");
   }
 
-  const { accessToken, refreshTokens } = await generateAccessAndRefreshTokens(user._id);
+  const { accessToken, refreshTokens } = await generateAccessAndRefreshTokens(
+    user._id
+  );
 
-  const loggedInUser = await User.findById(user._id).select("-password -refreshTokens");
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshTokens"
+  );
 
   const options = {
     httpOnly: true,
@@ -162,13 +199,22 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshTokens", refreshTokens, options)
     .status(200)
-    .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshTokens }, "User logged in successfully!"));
+    .json(
+      new ApiResponse(
+        200,
+        { user: loggedInUser, accessToken, refreshTokens },
+        "User logged in successfully!"
+      )
+    );
 });
-
 
 const logoutUser = asyncHandler(async (req: RequestWithUser, res: Response) => {
   if (req.user) {
-    await User.findByIdAndUpdate(req.user._id, { $set: { refreshToken: undefined } }, { new: true });
+    await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { refreshToken: undefined } },
+      { new: true }
+    );
   }
 
   const options = {
@@ -178,9 +224,58 @@ const logoutUser = asyncHandler(async (req: RequestWithUser, res: Response) => {
 
   return res
     .status(200)
-    .clearCookie('accessToken', options)
-    .clearCookie('refreshTokens', options)
-    .json(new ApiResponse(200, {}, 'User logged out successfully!'));
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshTokens", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully!"));
 });
 
-export { userRegister, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const incomingRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
+  
+    if (incomingRefreshToken) {
+      throw new ApiError(401, "Unauthorized request");
+    }
+  
+    const decodedToken = verify(
+      incomingRefreshToken,
+      process.env.ACCESS_TOKEN_SECRET as string
+    ) as JwtPayload;
+  
+    const user = await User.findById(decodedToken?._id);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+  
+    const isRefreshTokenValid = user.refreshTokens.includes(incomingRefreshToken);
+    if (!isRefreshTokenValid) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+  
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+  
+    const { accessToken, refreshTokens } = await generateAccessAndRefreshTokens(
+      user._id
+    );
+  
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshTokens", refreshTokens, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshTokens },
+          "Access token refreshed successfully!"
+        )
+      );
+  } catch (error: any) {
+    throw new ApiError(401, error?.message || "Invalid refresh token"); 
+  }
+});
+
+export { userRegister, loginUser, logoutUser, refreshAccessToken };
