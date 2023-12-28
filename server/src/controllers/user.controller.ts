@@ -310,7 +310,7 @@ const changeCurrentPassword = asyncHandler(
     } else if (!isValidPassword(newPassword)) {
       throw new ApiError(
         400,
-        "Password must be at least 8 characters, contain one lowercase letter, one uppercase letter, one number, and one special character. No spaces allowed"
+        "Password must be at least 8 characters, contain one lowercase letter, one uppercase letter, one number, and one special character. No spaces allowed!😢"
       );
     } else if (newPassword !== confirmPassword) {
       throw new ApiError(400, "Passwords do not match");
@@ -334,7 +334,7 @@ const changeCurrentPassword = asyncHandler(
 
     return res
       .status(200)
-      .json(new ApiResponse(200, {}, "Password changed successfully!"));
+      .json(new ApiResponse(200, {}, "Password changed successfully!🎉"));
   }
 );
 
@@ -345,11 +345,11 @@ const getCurrentUser = asyncHandler(
       "-password -refreshTokens"
     );
     if (!user) {
-      throw new ApiError(404, "User not found while fetching current user");
+      throw new ApiError(404, "User not found while fetching current user.😢");
     }
     return res
       .status(200)
-      .json(new ApiResponse(200, user, "Current user fetched successfully!"));
+      .json(new ApiResponse(200, user, "Current user fetched successfully!🎉"));
   }
 );
 
@@ -359,7 +359,7 @@ const updateAccountDetails = asyncHandler(
     const { fullName, email } = req.body;
 
     if (!fullName || !email) {
-      throw new ApiError(400, "All fields are required to update account");
+      throw new ApiError(400, "All fields are required to update account.😢");
     }
 
     const user = await User.findById(
@@ -370,12 +370,15 @@ const updateAccountDetails = asyncHandler(
       { new: true }
     ).select("-password");
     if (!user) {
-      throw new ApiError(404, "User not found while updating account details");
+      throw new ApiError(
+        404,
+        "User not found while updating account details.😢"
+      );
     }
     return res
       .status(200)
       .json(
-        new ApiResponse(200, user, "Account details updated successfully!")
+        new ApiResponse(200, user, "Account details updated successfully!🎉")
       );
   }
 );
@@ -385,13 +388,13 @@ const updateUserAvatar = asyncHandler(
   async (req: RequestWithHeaders, res: Response) => {
     const avatarLocalPath = req.file?.path;
     if (!avatarLocalPath) {
-      throw new ApiError(400, "Avatar file is messing while updating!");
+      throw new ApiError(400, "Avatar file is messing while updating!😢");
     }
     const avatar = await uploadOnCloudinary("avatar", avatarLocalPath);
     if (avatar instanceof ApiError || !avatar.url) {
       throw new ApiError(
         500,
-        "Error while uploading avatar file on cloudinary!"
+        "Error while uploading avatar file on cloudinary!😢"
       );
     }
     const user = await User.findByIdAndUpdate(
@@ -404,7 +407,7 @@ const updateUserAvatar = asyncHandler(
 
     return res
       .status(200)
-      .json(new ApiResponse(200, user, "Avatar image updated successfully!"));
+      .json(new ApiResponse(200, user, "Avatar image updated successfully!🎉"));
   }
 );
 
@@ -413,7 +416,7 @@ const updateUserCoverImage = asyncHandler(
   async (req: RequestWithHeaders, res: Response) => {
     const coverImageLocalPath = req.file?.path;
     if (!coverImageLocalPath) {
-      throw new ApiError(400, "Cover image file is missing while updating!");
+      throw new ApiError(400, "Cover image file is missing while updating!😢");
     }
     const coverImage = await uploadOnCloudinary(
       "coverImage",
@@ -422,7 +425,7 @@ const updateUserCoverImage = asyncHandler(
     if (coverImage instanceof ApiError || !coverImage.url) {
       throw new ApiError(
         500,
-        "Error while uploading cover image file on cloudinary!"
+        "Error while uploading cover image file on cloudinary!😢"
       );
     }
     const user = await User.findByIdAndUpdate(
@@ -435,10 +438,90 @@ const updateUserCoverImage = asyncHandler(
 
     return res
       .status(200)
-      .json(new ApiResponse(200, user, "Cover image updated successfully!"));
+      .json(new ApiResponse(200, user, "Cover image updated successfully! 🎉"));
   }
 );
 
+// Get user channel profile
+const getUserChannelProfile = asyncHandler(
+  async (req: RequestWithHeaders, res: Response) => {
+    const { username } = req.params;
+
+    if (!username.trim()) {
+      throw new ApiError(
+        400,
+        "Username is messing while fetching user channel profile!😢"
+      );
+    }
+
+    const channel = await User.aggregate([
+      {
+        $match: {
+          username: username?.toLowerCase(),
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptions",
+          localField: "_id",
+          foreignField: "channel",
+          as: "subscribers",
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptions",
+          localField: "_id",
+          foreignField: "subscriber",
+          as: "subscribedTo",
+        },
+      },
+      {
+        $addFields: {
+          subscribersCount: {
+            $size: "$subscribers",
+          },
+          channelsSubscribedCount: {
+            $size: "$subscribedTo",
+          },
+          isSubscribed: {
+            $cond: {
+              if: {
+                $in: [req.user?._id, "$subscribers.subscriber"],
+              },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          fullName: 1,
+          username: 1,
+          email: 1,
+          avatar: 1,
+          coverImage: 1,
+          subscribersCount: 1,
+          channelsSubscribedCount: 1,
+          isSubscribed: 1,
+          createdAt: 1,
+        },
+      },
+    ]);
+
+    if (!channel) {
+      throw new ApiError(404, "Channel does not exist!😢");
+    }
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, channel, "Channel profile fetched successfully!🎉")
+      );
+  }
+);
+
+// Export all user controllers
 export {
   userRegister,
   loginUser,
@@ -449,4 +532,5 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannelProfile,
 };
