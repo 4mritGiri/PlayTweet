@@ -13,6 +13,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import * as fs from "fs";
 import { JwtPayload, verify } from "jsonwebtoken";
 import { IncomingHttpHeaders } from "http";
+import mongoose from "mongoose";
 
 interface Files {
   [fieldname: string]: Express.Multer.File[];
@@ -510,13 +511,70 @@ const getUserChannelProfile = asyncHandler(
       },
     ]);
 
-    if (!channel) {
+    if (channel.length === 0) {
       throw new ApiError(404, "Channel does not exist!😢");
     }
     return res
       .status(200)
       .json(
         new ApiResponse(200, channel, "Channel profile fetched successfully!🎉")
+      );
+  }
+);
+
+// Watch history
+const getWatchHistory = asyncHandler(
+  async (req: RequestWithHeaders, res: Response) => {
+    const user = await User.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(req.user?._id),
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "watchHistory",
+          foreignField: "_id",
+          as: "watchHistory",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                  {
+                    $project: {
+                      fullName: 1,
+                      username: 1,
+                      avatar: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $addFields: {
+                owner: {
+                  $first: "$owner",
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    if (!user) {
+      throw new ApiError(404, "User not found while fetching watch history!😢");
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully!🎉")
       );
   }
 );
@@ -533,4 +591,5 @@ export {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
+  getWatchHistory,
 };
