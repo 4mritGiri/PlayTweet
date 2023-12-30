@@ -33,18 +33,28 @@ userRouter.post("/refresh-token", refreshAccessToken);
 
 userRouter.post("/change-password", verifyJWT, changeCurrentPassword);
 
-userRouter.get("/get-current-user", getCurrentUser);
+userRouter.get("/current-user", verifyJWT, getCurrentUser);
 
-userRouter.put('/update-user-details', verifyJWT, updateAccountDetails);
+userRouter.patch("/update-account", verifyJWT, updateAccountDetails);
 
-userRouter.put('/update-user-avatar', verifyJWT, updateUserAvatar);
+userRouter.patch(
+  "/update-user-avatar",
+  verifyJWT,
+  upload.single("avatar"),
+  updateUserAvatar
+);
 
-userRouter.put('/update-user-cover-image', verifyJWT, updateUserCoverImage);
+userRouter.patch(
+  "/update-user-cover-image",
+  verifyJWT,
+  upload.single("coverImage"),
+  updateUserCoverImage
+);
 
 // fetch using /username
-userRouter.get("/:username", getUserChannelProfile);
+userRouter.get("/c/:username", verifyJWT, getUserChannelProfile);
 
-
- 
+// watch history
+userRouter.get("/watch-history", verifyJWT, getUserChannelProfile);
 
 export { userRouter };

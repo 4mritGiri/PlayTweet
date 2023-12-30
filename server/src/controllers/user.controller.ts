@@ -416,9 +416,14 @@ const updateUserAvatar = asyncHandler(
 const updateUserCoverImage = asyncHandler(
   async (req: RequestWithHeaders, res: Response) => {
     const coverImageLocalPath = req.file?.path;
+    
     if (!coverImageLocalPath) {
       throw new ApiError(400, "Cover image file is missing while updating!😢");
     }
+
+    //TODO: Delete old cover image from cloudinary
+    
+    
     const coverImage = await uploadOnCloudinary(
       "coverImage",
       coverImageLocalPath
